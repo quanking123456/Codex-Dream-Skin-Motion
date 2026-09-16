@@ -1,5 +1,9 @@
 # Windows Changelog
 
+## 1.6.4
+
+- 完成跨平台 Release 的 XCTest 成功摘要校验并移除旧版本硬编码，使 DMG 与 Windows Setup 能从同一标签继续发布；Windows 动态背景功能不变。
+
 ## 1.6.3
 
 - 修复跨平台发布的 macOS XCTest 执行方式，使完整 Release 能继续生成 DMG 与 Windows Setup；Windows 动态背景功能和主题内容不变。

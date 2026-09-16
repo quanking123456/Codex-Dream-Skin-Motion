@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.6.4
+
+- 严格校验 XCTest 最终成功摘要与非零测试数量，仅在 GitHub ARM macOS 已确认的“全部通过但状态码为 1”情况下容忍异常状态；同时移除测试套件中遗留的 `1.5.18` 硬编码。
+
 ## 1.6.3
 
 - 改由 SwiftPM 构建 XCTest 测试包，再用 Apple `xcrun xctest` 直接运行，确保 GitHub macOS 运行器的退出状态真实反映测试结果并让 DMG 构建继续执行。
