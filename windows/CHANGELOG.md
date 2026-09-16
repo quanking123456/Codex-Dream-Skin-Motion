@@ -1,5 +1,9 @@
 # Windows Changelog
 
+## 1.6.1
+
+- 恢复审核过的 Gothic Void Crusade 预设原始元数据与固定摘要，使 Windows Setup 和 macOS DMG 的发布打包校验继续通过；动态背景实现与 Wlop/RC 下载主题不变。
+
 ## 1.6.0
 
 - 新增 Windows 本地 MP4 动态背景：托盘可选择视频，保存与切换主题时保留视频，视频静音自动循环，并以静态图片作为加载和失败回退。
