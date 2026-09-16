@@ -1,5 +1,9 @@
 # Windows Changelog
 
+## 1.6.3
+
+- 修复跨平台发布的 macOS XCTest 执行方式，使完整 Release 能继续生成 DMG 与 Windows Setup；Windows 动态背景功能和主题内容不变。
+
 ## 1.6.2
 
 - 将跨平台发布流水线的 macOS 构建固定到稳定的 macOS 15 镜像，并仅运行现有 XCTest，避开 macOS 26 SwiftPM 兼容性问题；Windows 动态背景实现与主题内容不变。

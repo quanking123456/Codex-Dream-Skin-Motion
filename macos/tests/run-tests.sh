@@ -73,8 +73,7 @@ fi
 # Xcode platform. CommandLineTools-only hosts report this platform blocker;
 # build-menubar-app.sh is still independently verifiable with DREAMSKIN_SDK.
 if /usr/bin/xcrun --sdk macosx --show-sdk-platform-path >/dev/null 2>&1; then
-  /usr/bin/swift build --package-path "$ROOT/menubar-app" --product CodexDreamSkinMenuBar
-  /usr/bin/swift test --package-path "$ROOT/menubar-app" --disable-swift-testing
+  "$ROOT/scripts/test-menubar-app.sh"
 else
   printf 'SKIP: native SwiftPM build/XCTest require a full matching Xcode macOS platform.\n'
 fi

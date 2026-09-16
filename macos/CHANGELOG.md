@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.6.3
+
+- 改由 SwiftPM 构建 XCTest 测试包，再用 Apple `xcrun xctest` 直接运行，确保 GitHub macOS 运行器的退出状态真实反映测试结果并让 DMG 构建继续执行。
+
 ## 1.6.2
 
 - 明确仅运行现有 XCTest，并将 GitHub 构建固定到稳定的 macOS 15 镜像，避开 `macos-latest` 切换到 macOS 26 后测试全部通过仍返回退出码 1 的工具链问题，使 DMG 发布构建可以继续执行。
