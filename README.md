@@ -130,8 +130,8 @@ macOS 菜单栏和 Windows 托盘都有「主题库 Gallery」和「在线 Studi
 - [`R-c`](./themes/R-c/)：使用 `background.jpg` 的静态背景。
 
 <p align="center">
-  <img src="themes/Wlop/art.jpg" alt="Wlop 动态主题静态海报预览" width="900"><br>
-  <sub>Wlop 动态主题静态海报预览 · <a href="docs/assets/Wlof示例.mp4">查看运行示例视频</a></sub>
+  <img src="docs/assets/Wlof%E7%A4%BA%E4%BE%8B.png" alt="Wlop 动态背景运行界面示例" width="900"><br>
+  <sub>Wlop 动态背景运行界面示例 · <a href="docs/assets/Wlof%E7%A4%BA%E4%BE%8B.mp4">查看运行示例视频</a></sub>
 </p>
 
 把完整主题目录复制到 `%LOCALAPPDATA%\CodexDreamSkin\themes\`，然后在托盘的“已保存主题”中选择。
