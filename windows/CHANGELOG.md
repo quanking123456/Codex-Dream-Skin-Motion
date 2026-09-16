@@ -2,7 +2,7 @@
 
 ## 1.6.2
 
-- 修复跨平台发布流水线在 GitHub macOS 26 ARM 运行器上的 SwiftPM 兼容性问题；Windows 动态背景实现与主题内容不变。
+- 将跨平台发布流水线的 macOS 构建固定到稳定的 macOS 15 镜像，并仅运行现有 XCTest，避开 macOS 26 SwiftPM 兼容性问题；Windows 动态背景实现与主题内容不变。
 
 ## 1.6.1
 

@@ -226,7 +226,9 @@ jobs:
 
   macos-tests:
     name: macOS repository regressions
-    runs-on: macos-latest
+    # macos-latest moved to macOS 26 / Xcode 26 in 2026. Keep this XCTest and
+    # universal-binary lane on the stable image until that toolchain settles.
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4

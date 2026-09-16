@@ -2,7 +2,7 @@
 
 ## 1.6.2
 
-- 在 GitHub 的 macOS 26 ARM 运行器上明确仅运行现有 XCTest，避开空 Swift Testing 套件错误返回退出码 1 的工具链问题，使 DMG 发布构建可以继续执行。
+- 明确仅运行现有 XCTest，并将 GitHub 构建固定到稳定的 macOS 15 镜像，避开 `macos-latest` 切换到 macOS 26 后测试全部通过仍返回退出码 1 的工具链问题，使 DMG 发布构建可以继续执行。
 
 ## 1.6.1
 

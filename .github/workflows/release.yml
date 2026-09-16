@@ -307,7 +307,9 @@ jobs:
     name: Build macOS DMG
     needs: [guard, create-tag]
     if: needs.guard.outputs.should_release == 'true'
-    runs-on: macos-latest
+    # macos-latest moved to macOS 26 / Xcode 26 in 2026 and currently returns
+    # a nonzero SwiftPM status after this package's XCTest suite passes.
+    runs-on: macos-15
     steps:
       - name: Check out source
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
