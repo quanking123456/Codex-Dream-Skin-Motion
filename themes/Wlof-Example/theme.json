@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "id": "Wlof-Example",
+  "name": "Wlof 示例",
+  "appearance": "dark",
+  "art": {
+    "focusX": 0.85,
+    "focusY": 0.42,
+    "safeArea": "none",
+    "taskMode": "ambient"
+  },
+  "colors": {
+    "background": "#0e0c0a",
+    "panel": "#1a1512",
+    "panelAlt": "#261f1a",
+    "accent": "#d4af6a",
+    "accentAlt": "#e4c48c",
+    "secondary": "#8a7a68",
+    "highlight": "#f0ddc4",
+    "text": "#f4efe8",
+    "muted": "#a89a8c",
+    "line": "#3d342c"
+  },
+  "image": "art.jpg",
+  "video": "Wlof示例.mp4"
+}
