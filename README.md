@@ -124,15 +124,14 @@ macOS 菜单栏和 Windows 托盘都有「主题库 Gallery」和「在线 Studi
 
 ### Wlop 动态主题与 RC 静态主题
 
-仓库的 [`themes/`](./themes/) 目录提供三套经授权公开的 Windows 示例主题：
+仓库的 [`themes/`](./themes/) 目录提供两套经授权公开的 Windows 示例主题：
 
 - [`Wlop`](./themes/Wlop/)：使用 `Wlop.mp4` 的动态背景，并以 `art.jpg` 作为海报图和失败回退。
 - [`R-c`](./themes/R-c/)：使用 `background.jpg` 的静态背景。
-- [`Wlof-Example`](./themes/Wlof-Example/)：使用 `Wlof示例.mp4` 的动态背景，`art.jpg` 为静态海报与失败回退。
 
 <p align="center">
-  <img src="themes/Wlof-Example/art.jpg" alt="Wlof 示例动态主题的静态海报预览" width="900"><br>
-  <sub>Wlof 示例动态主题 · MP4 播放海报与失败回退</sub>
+  <img src="themes/Wlop/art.jpg" alt="Wlop 动态主题静态海报预览" width="900"><br>
+  <sub>Wlop 动态主题静态海报预览 · <a href="docs/assets/Wlof示例.mp4">查看运行示例视频</a></sub>
 </p>
 
 把完整主题目录复制到 `%LOCALAPPDATA%\CodexDreamSkin\themes\`，然后在托盘的“已保存主题”中选择。

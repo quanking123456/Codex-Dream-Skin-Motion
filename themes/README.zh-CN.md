@@ -1,18 +1,17 @@
 # 可下载主题
 
-这里提供三套可选主题，需要手动复制到 Windows Codex Dream Skin 的“已保存主题”目录，
+这里提供两套可选主题，需要手动复制到 Windows Codex Dream Skin 的“已保存主题”目录，
 不会随安装器自动启用。
 
 ## 包含内容
 
 - `Wlop`：动态背景，使用 `Wlop.mp4`，`art.jpg` 是海报图与播放失败时的静态回退。
 - `R-c`：静态背景，使用 `background.jpg`。
-- `Wlof-Example`：动态背景，使用 `Wlof示例.mp4`，`art.jpg` 是海报图与播放失败时的静态回退。
 
 ## Windows 安装方法
 
 1. 安装本 Motion 分支并退出 Codex Dream Skin。
-2. 将完整的 `Wlop`、`R-c` 或 `Wlof-Example` 文件夹复制到
+2. 将完整的 `Wlop` 或 `R-c` 文件夹复制到
    `%LOCALAPPDATA%\CodexDreamSkin\themes\`。
 3. 启动 Dream Skin 托盘，在“已保存主题”中选择对应主题。
 
