@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.6.2
+
+- 在 GitHub 的 macOS 26 ARM 运行器上明确仅运行现有 XCTest，避开空 Swift Testing 套件错误返回退出码 1 的工具链问题，使 DMG 发布构建可以继续执行。
+
 ## 1.6.1
 
 - 恢复审核过的 Gothic Void Crusade 预设原始元数据与固定摘要，修复 Motion 仓库首次发布时的 DMG/Setup 打包失败；动态背景实现与下载主题不变。

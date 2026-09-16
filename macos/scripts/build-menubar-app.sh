@@ -25,7 +25,7 @@ esac
 [ ! -L "$OUTPUT_APP" ] || { printf 'Refusing to replace a symbolic-link output: %s\n' "$OUTPUT_APP" >&2; exit 1; }
 
 if [ "$SKIP_TESTS" != "true" ]; then
-  /usr/bin/swift test --package-path "$PACKAGE_ROOT"
+  /usr/bin/swift test --package-path "$PACKAGE_ROOT" --disable-swift-testing
 fi
 
 TMP="$(/usr/bin/mktemp -d /tmp/codex-dream-skin-app.XXXXXX)"

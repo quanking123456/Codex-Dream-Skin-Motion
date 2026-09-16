@@ -247,7 +247,7 @@ jobs:
         run: ./macos/tests/run-tests.sh
 
       - name: Build and test the native menu bar app
-        run: swift test --package-path macos/menubar-app
+        run: swift test --package-path macos/menubar-app --disable-swift-testing
 
       - name: Compile and verify the universal DMG
         run: ./macos/scripts/build-dmg.sh --skip-tests

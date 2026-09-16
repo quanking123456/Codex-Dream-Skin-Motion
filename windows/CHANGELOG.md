@@ -1,5 +1,9 @@
 # Windows Changelog
 
+## 1.6.2
+
+- 修复跨平台发布流水线在 GitHub macOS 26 ARM 运行器上的 SwiftPM 兼容性问题；Windows 动态背景实现与主题内容不变。
+
 ## 1.6.1
 
 - 恢复审核过的 Gothic Void Crusade 预设原始元数据与固定摘要，使 Windows Setup 和 macOS DMG 的发布打包校验继续通过；动态背景实现与 Wlop/RC 下载主题不变。
