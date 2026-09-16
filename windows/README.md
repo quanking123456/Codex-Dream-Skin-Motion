@@ -15,7 +15,7 @@ Codex Dream Skin 通过本机回环 CDP 给官方 Codex Windows 桌面应用加�
 
 ## Release 安装（推荐普通用户）
 
-普通用户请从 [GitHub Releases](https://github.com/Fei-Away/Codex-Dream-Skin/releases) 下载
+普通用户请从 [GitHub Releases](https://github.com/quanking123456/Codex-Dream-Skin-Motion/releases) 下载
 `CodexDreamSkin-Setup-vX.Y.Z.exe`，按 [`docs/install-windows.md`](../docs/install-windows.md) 的图形
 界面步骤安装。安装器自带固定 Node 运行时，不需要 clone 仓库或运行 `.ps1`；默认按当前用户安装，
 不应要求管理员权限。未签名的新下载偶尔会触发 SmartScreen，按“更多信息 → 仍要运行”即可，
@@ -81,6 +81,7 @@ powershell.exe -NoProfile -ExecutionPolicy RemoteSigned -File .\scripts\verify-d
 打开 `Codex Dream Skin - Tray` 后可以：
 
 - 更换 PNG、JPEG 或 WebP 背景图。
+- 选择本机 MP4 作为静音、自动循环的动态背景。
 - 导入普通 `.zip` 主题包到“已保存主题”（不支持 `.dreamskin`）。
 - 保存当前主题并从「已保存主题」切换。
 - 暂停或继续显示皮肤。
@@ -94,6 +95,11 @@ Codex，并验证磁盘上的当前主题与可见主题一致；只有建立了
 确认前请保存输入。链接不能指定任意下载地址、文件路径或命令，也不能静默应用；不完整的旧主题仍会被客户端拒绝。
 
 导入图片必须是纯背景，不要使用包含窗口、侧栏、输入框、文字或按钮的效果截图。图片上限为 10 MB；宽或高不能超过 16384 像素，总像素不能超过 5000 万。
+
+动态背景只通过 Windows 托盘中的“选择动态背景…”从本机导入，必须是有效 MP4，文件上限为 512 MiB。
+视频会复制到 `%LOCALAPPDATA%\CodexDreamSkin\active-theme`，通过 CDP 文件句柄加载，静音、自动播放并循环；
+若 Chromium 暂时无法接收文件句柄，运行时会使用仅绑定 `127.0.0.1`、带随机令牌的临时回环地址作为回退。
+主题 ZIP 与 DreamSkin.cc 社区包仍保持现有图片主题契约，不接受视频文件，以免扩大归档和下载信任边界。
 
 新的正式 Studio ZIP 必须包含 `manifest.json`、非空 `theme.json`、非空 `theme.css`、恰好一张 `background.webp|jpg|png`，并可选
 带 `LICENSE.txt`、`manifest.sig`；文件直接位于根目录或只包一层主题目录。本地简化包也必须恰好包含
@@ -185,7 +191,7 @@ Issue #235 的实机结果已经确认两种独立失败：`26.715.10079.0` 的 
 
 重新运行安装器和启动快捷方式。脚本会重新发现当前注册的 Store 包，不依赖旧版本的可执行文件路径。
 
-提交问题时请从仓库的 [Issue 提交页](https://github.com/Fei-Away/Codex-Dream-Skin/issues/new/choose) 选择 Bug 模板，附上系统版本、Codex 来源、复现步骤和相关日志片段。请删除密钥、`auth.json`、中转 token 和私人对话内容。
+提交问题时请从仓库的 [Issue 提交页](https://github.com/quanking123456/Codex-Dream-Skin-Motion/issues/new/choose) 选择 Bug 模板，附上系统版本、Codex 来源、复现步骤和相关日志片段。请删除密钥、`auth.json`、中转 token 和私人对话内容。
 
 ## 安全边界
 

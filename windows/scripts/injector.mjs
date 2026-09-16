@@ -4,6 +4,7 @@ import { createHash } from "node:crypto";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { readImageMetadata } from "./image-metadata.mjs";
+import { MAX_VIDEO_BYTES, MediaServerController, isMp4Container } from "./media-server.mjs";
 import {
   normalizeThemeColor,
   normalizeThemeText,
@@ -39,7 +40,7 @@ const stableTestidLiteral = (testid) => {
   }
   return JSON.stringify(`[data-testid="${testid}"]`);
 };
-const SKIN_VERSION = "1.5.18";
+const SKIN_VERSION = "1.6.0";
 // .github/workflows/ci.yml's version-consistency check greps this file for a
 // literal `const SKIN_VERSION = "...";` line, so the export stays a separate
 // statement rather than an inline `export const`.
@@ -548,6 +549,24 @@ export async function loadTheme(themeDir) {
   if (!isContainedRelativePath(realRelativeImage)) {
     throw new Error("Theme image cannot escape through a link or junction");
   }
+  let videoPath = null;
+  if (raw.video !== undefined) {
+    if (typeof raw.video !== "string" || !raw.video || path.basename(raw.video) !== raw.video ||
+        /[\u0000-\u001f\u007f-\u009f\u2028\u2029]/u.test(raw.video) ||
+        path.extname(raw.video).toLowerCase() !== ".mp4") {
+      throw new Error(`${themePath} has an invalid video field; only a relative MP4 filename is supported`);
+    }
+    const requestedVideoPath = path.resolve(realThemeDir, raw.video);
+    const relativeVideo = path.relative(realThemeDir, requestedVideoPath);
+    if (!isContainedRelativePath(relativeVideo)) {
+      throw new Error("Theme video must remain inside the selected theme directory");
+    }
+    videoPath = await fs.realpath(requestedVideoPath);
+    const realRelativeVideo = path.relative(realThemeDir, videoPath);
+    if (!isContainedRelativePath(realRelativeVideo)) {
+      throw new Error("Theme video cannot escape through a link or junction");
+    }
+  }
   const art = raw.art && typeof raw.art === "object" && !Array.isArray(raw.art) ? raw.art : {};
   const rawColors = raw.colors && typeof raw.colors === "object" && !Array.isArray(raw.colors)
     ? raw.colors : null;
@@ -578,6 +597,7 @@ export async function loadTheme(themeDir) {
     statusText: normalizeThemeText(raw.statusText, "DREAM SKIN ONLINE", 120, "statusText", themePath),
     quote: normalizeThemeText(raw.quote, "MAKE SOMETHING WONDERFUL", 120, "quote", themePath),
     image,
+    ...(videoPath ? { video: raw.video } : {}),
     appearance: normalizedChoice(raw.appearance, "appearance", THEME_CHOICES.appearance, "auto"),
     art: {
       focusX: normalizedUnit(art.focusX, "art.focusX"),
@@ -589,9 +609,10 @@ export async function loadTheme(themeDir) {
     explicitColorKeys: rawColors ? colorKeys.filter((key) => Object.hasOwn(rawColors, key)) : [],
     colors,
   };
-  const [themeStat, imageStat, safeCss] = await Promise.all([
+  const [themeStat, imageStat, videoStat, safeCss] = await Promise.all([
     fs.stat(themePath),
     fs.stat(realImagePath),
+    videoPath ? fs.stat(videoPath) : Promise.resolve(null),
     loadSafeCss(realThemeDir),
   ]);
   if (!imageStat.isFile()) throw new Error("Theme image is not a file");
@@ -607,11 +628,35 @@ export async function loadTheme(themeDir) {
   if (!artMetadata) {
     throw new Error("Theme image metadata is invalid or exceeds the 16384px / 50MP safety limit");
   }
+  let videoIdentity = "none";
+  if (videoStat) {
+    if (!videoStat.isFile() || videoStat.size < 1 || videoStat.size > MAX_VIDEO_BYTES) {
+      throw new Error(`Theme video must be a non-empty MP4 no larger than ${MAX_VIDEO_BYTES} bytes`);
+    }
+    const videoHandle = await fs.open(videoPath, "r");
+    try {
+      const before = await videoHandle.stat();
+      const header = Buffer.alloc(16);
+      const { bytesRead } = await videoHandle.read(header, 0, header.length, 0);
+      if (!isMp4Container(header.subarray(0, bytesRead), before.size)) {
+        throw new Error("Theme video is not a valid MP4 container");
+      }
+      const after = await videoHandle.stat();
+      if (!sameFileStat(before, after) || !sameFileStat(videoStat, after)) {
+        throw new Error("Theme video changed while being loaded");
+      }
+      videoIdentity = `${after.size}:${after.mtimeMs}:${after.ctimeMs}:${header.toString("hex")}`;
+    } finally {
+      await videoHandle.close();
+    }
+  }
   theme.artMetadata = artMetadata;
   const fingerprint = createHash("sha256")
     .update(themeText, "utf8")
     .update("\0")
     .update(imageBytes)
+    .update("\0")
+    .update(videoIdentity)
     .update("\0")
     .update(safeCss?.source ?? "")
     .digest("hex");
@@ -625,13 +670,19 @@ export async function loadTheme(themeDir) {
     safeCssPath: safeCss?.path ?? null,
     safeCssStatus: safeCss ? "validated" : "none",
     fingerprint,
+    videoIdentity,
+    videoPath,
     sourceStamp: `${themeStat.size}:${themeStat.mtimeMs}:${imageStat.size}:${imageStat.mtimeMs}:` +
+      `${videoStat ? `${videoStat.size}:${videoStat.mtimeMs}:${videoStat.ctimeMs}` : "none"}:` +
       (safeCss ? `${safeCss.stat.size}:${safeCss.stat.mtimeMs}` : "none"),
   };
 }
 
-export async function loadPayload(themeDir = path.join(root, "assets"), candidateTheme = null) {
+export async function loadPayload(themeDir = path.join(root, "assets"), candidateTheme = null, videoTransport = null) {
   const loadedTheme = candidateTheme ?? await loadTheme(themeDir);
+  const resolvedVideoTransport = loadedTheme.videoPath
+    ? (videoTransport ?? { mode: "blob" })
+    : null;
   const [css, template] = await Promise.all([
     fs.readFile(path.join(root, "assets", "dream-skin.css"), "utf8"),
     fs.readFile(path.join(root, "assets", "renderer-inject.js"), "utf8"),
@@ -650,6 +701,8 @@ export async function loadPayload(themeDir = path.join(root, "assets"), candidat
     .update(combinedCss)
     .update(template)
     .update(JSON.stringify(loadedTheme.theme))
+    .update("\0")
+    .update(loadedTheme.videoIdentity ?? "none")
     .digest("hex")
     .slice(0, 20);
   // Every replacement uses a function so String.prototype.replace never
@@ -662,6 +715,7 @@ export async function loadPayload(themeDir = path.join(root, "assets"), candidat
     .replace("__DREAM_SKIN_CSS_JSON__", () => JSON.stringify(combinedCss))
     .replace("__DREAM_SKIN_ART_JSON__", () => JSON.stringify(artDataUrl))
     .replace("__DREAM_SKIN_THEME_JSON__", () => JSON.stringify(loadedTheme.theme))
+    .replace("__DREAM_SKIN_VIDEO_JSON__", () => JSON.stringify(resolvedVideoTransport))
     .replace("__DREAM_SKIN_VERSION_JSON__", () => JSON.stringify(SKIN_VERSION))
     .replace("__DREAM_SKIN_STYLE_REVISION_JSON__", () => JSON.stringify(styleRevision))
     .replace("__DREAM_SKIN_PAYLOAD_REVISION_JSON__", () => JSON.stringify(revision));
@@ -679,7 +733,7 @@ export async function loadPayload(themeDir = path.join(root, "assets"), candidat
     throw new Error(`Payload failed to parse as JavaScript: ${error.message}`);
   }
   const { imageBytes: _imageBytes, ...themeState } = loadedTheme;
-  return { ...themeState, payload, revision };
+  return { ...themeState, payload, revision, videoTransport: resolvedVideoTransport };
 }
 
 async function fileExists(filePath) {
@@ -693,15 +747,17 @@ async function fileExists(filePath) {
 }
 
 async function readThemeSourceStamp(loadedTheme) {
-  const [themeStat, imageStat, cssStat] = await Promise.all([
+  const [themeStat, imageStat, videoStat, cssStat] = await Promise.all([
     fs.stat(loadedTheme.themePath),
     fs.stat(loadedTheme.imagePath),
+    loadedTheme.videoPath ? fs.stat(loadedTheme.videoPath) : Promise.resolve(null),
     fs.stat(path.join(path.dirname(loadedTheme.themePath), "theme.css")).catch((error) => {
       if (error.code === "ENOENT") return null;
       throw error;
     }),
   ]);
   return `${themeStat.size}:${themeStat.mtimeMs}:${imageStat.size}:${imageStat.mtimeMs}:` +
+    `${videoStat ? `${videoStat.size}:${videoStat.mtimeMs}:${videoStat.ctimeMs}` : "none"}:` +
     (cssStat ? `${cssStat.size}:${cssStat.mtimeMs}` : "none");
 }
 
@@ -865,15 +921,109 @@ async function connectCodexTargets(port, timeoutMs, expectedBrowserId) {
   throw new Error(`No verified Codex renderer on 127.0.0.1:${port}: ${lastError?.message ?? "timed out"}`);
 }
 
-async function applyToSession(session, payload) {
-  return session.evaluate(payload);
+const VIDEO_INPUT_SELECTOR = "#codex-dream-skin-video-input";
+const VIDEO_STATE_KEY = "__CODEX_DREAM_SKIN_STATE__";
+const mediaPolicyTargets = new Set();
+
+export async function attachBlobVideoToSession(session, loadedPayload) {
+  if (loadedPayload?.videoTransport?.mode !== "blob" || !loadedPayload.videoPath) return true;
+  const deadline = Date.now() + 8000;
+  let lastError = null;
+  while (Date.now() < deadline) {
+    try {
+      const inputReady = await session.evaluate(
+        `Boolean(window[${JSON.stringify(VIDEO_STATE_KEY)}]?.ensureVideoInput?.())`,
+      );
+      if (!inputReady) throw new Error("Renderer did not create the video file input");
+      await session.send("DOM.enable");
+      const document = await session.send("DOM.getDocument", { depth: -1 });
+      const node = await session.send("DOM.querySelector", {
+        nodeId: document.root.nodeId,
+        selector: VIDEO_INPUT_SELECTOR,
+      });
+      if (!node.nodeId) throw new Error("Video file input is not attached to the renderer DOM");
+      await session.send("DOM.setFileInputFiles", {
+        nodeId: node.nodeId,
+        files: [loadedPayload.videoPath],
+      });
+      const attached = await session.evaluate(
+        `Promise.resolve(window[${JSON.stringify(VIDEO_STATE_KEY)}]?.attachVideoFile?.()).then(Boolean)`,
+      );
+      if (attached) return true;
+      const handled = await session.evaluate(
+        `Boolean(window[${JSON.stringify(VIDEO_STATE_KEY)}]?.videoFailed)`,
+      );
+      if (handled) return true;
+    } catch (error) {
+      lastError = error;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 120));
+  }
+  throw new Error(`Could not attach the local MP4 through CDP: ${lastError?.message ?? "timed out"}`);
 }
 
-export function earlyPayloadFor(payload, revision) {
+async function syncMediaFetchPolicyForSession(session, loadedPayload) {
+  const transport = loadedPayload?.videoTransport;
+  const needsBypass = transport?.mode === "server" || Boolean(transport?.fallbackUrl);
+  const targetId = session.target?.id;
+  if (typeof targetId !== "string") return;
+  const bypassActive = mediaPolicyTargets.has(targetId);
+  if (needsBypass === bypassActive) return;
+  await session.send("Page.enable").catch(() => {});
+  await session.send("Page.setBypassCSP", { enabled: needsBypass });
+  if (needsBypass) mediaPolicyTargets.add(targetId);
+  else mediaPolicyTargets.delete(targetId);
+}
+
+export function planSessionPayloadApplication(currentState, loadedPayload = null) {
+  const hasVideo = Boolean(loadedPayload?.videoPath);
+  const samePayload = Boolean(currentState && loadedPayload &&
+    currentState.revision === loadedPayload.revision &&
+    currentState.themeId === loadedPayload.theme?.id);
+  if (!samePayload) return { evaluatePayload: true, attachVideo: hasVideo };
+  if (!hasVideo) return { evaluatePayload: false, attachVideo: false };
+  const expectedMode = loadedPayload.videoTransport?.mode ?? "blob";
+  if (currentState.videoFailed === true || currentState.videoMode !== expectedMode) {
+    return { evaluatePayload: true, attachVideo: true };
+  }
+  if (currentState.videoReady === true) {
+    return { evaluatePayload: false, attachVideo: false };
+  }
+  // An early-document payload can create the hidden video stage before CDP is
+  // able to assign the local file. Reuse that stage and attach only the file;
+  // evaluating the full renderer again would flash the poster and restart time.
+  return { evaluatePayload: false, attachVideo: true };
+}
+
+async function readAppliedPayloadState(session) {
+  return session.evaluate(`(() => {
+    const runtime = window[${JSON.stringify(VIDEO_STATE_KEY)}];
+    if (!runtime) return null;
+    return {
+      themeId: runtime.themeId ?? null,
+      revision: runtime.revision ?? null,
+      videoMode: runtime.videoMode ?? null,
+      videoReady: runtime.videoReady ?? null,
+      videoFailed: runtime.videoFailed ?? null,
+    };
+  })()`).catch(() => null);
+}
+
+async function applyToSession(session, payload, loadedPayload = null) {
+  await syncMediaFetchPolicyForSession(session, loadedPayload);
+  const currentState = await readAppliedPayloadState(session);
+  const plan = planSessionPayloadApplication(currentState, loadedPayload);
+  const result = plan.evaluatePayload ? await session.evaluate(payload) : currentState;
+  if (plan.attachVideo) await attachBlobVideoToSession(session, loadedPayload);
+  return result;
+}
+
+export function earlyPayloadFor(payload, generationId, payloadRevision = null) {
   return `(() => {
     const generationKey = "__CODEX_DREAM_SKIN_EARLY_GENERATION__";
     const appliedKey = "__CODEX_DREAM_SKIN_EARLY_APPLIED__";
-    const generation = ${JSON.stringify(revision)};
+    const generation = ${JSON.stringify(generationId)};
+    const expectedRevision = ${JSON.stringify(payloadRevision)};
     window[generationKey] = generation;
     let bootstrapTimer = null;
     let timeout = null;
@@ -906,6 +1056,12 @@ export function earlyPayloadFor(payload, revision) {
       // committed; requiring body here would create a visible unskinned first
       // frame on cold navigation.
       if (!root || !hasCodexSurface()) return false;
+      const currentRuntime = window[${JSON.stringify(VIDEO_STATE_KEY)}];
+      if (expectedRevision && window[appliedKey] === generation &&
+          currentRuntime?.revision === expectedRevision) {
+        stop();
+        return true;
+      }
       stop();
       ${payload};
       window[appliedKey] = generation;
@@ -918,9 +1074,9 @@ export function earlyPayloadFor(payload, revision) {
   })()`;
 }
 
-async function registerEarlyPayload(session, payload, revision) {
+async function registerEarlyPayload(session, payload, generationId, payloadRevision = null) {
   const result = await session.send("Page.addScriptToEvaluateOnNewDocument", {
-    source: earlyPayloadFor(payload, revision),
+    source: earlyPayloadFor(payload, generationId, payloadRevision),
   });
   return result.identifier ?? null;
 }
@@ -1246,6 +1402,10 @@ export async function verifySession(
       expectedVersion: ${JSON.stringify(SKIN_VERSION)},
       themeId: runtime?.themeId ?? null,
       revision: runtime?.revision ?? null,
+      videoMode: runtime?.videoMode ?? null,
+      videoReady: runtime?.videoReady ?? null,
+      videoFailed: runtime?.videoFailed ?? null,
+      videoError: runtime?.videoError ?? null,
       styleMode: runtime?.styleMode ?? null,
       stylePresent: Boolean(adopted || fallback),
       scope: runtime?.scope ?? null,
@@ -1302,6 +1462,7 @@ export async function verifySession(
     const expectedRevision = ${JSON.stringify(expectedRevision)};
     const payloadPass = (!expectedThemeId || result.themeId === expectedThemeId) &&
       (!expectedRevision || result.revision === expectedRevision);
+    const videoPass = !result.videoMode || (result.videoReady === true && result.videoFailed !== true);
     result.expectedThemeId = expectedThemeId;
     result.expectedRevision = expectedRevision;
     result.readiness = {
@@ -1320,7 +1481,9 @@ export async function verifySession(
     result.pass = result.installed && result.version === result.expectedVersion &&
       result.stylePresent && result.businessClassPollution === 0 && !result.documentOverflow.x &&
       windowPass && documentPass && viewportPass && structurePass &&
-      payloadPass && homePass;
+      payloadPass && videoPass && homePass;
+    result.payloadPass = payloadPass;
+    result.videoPass = videoPass;
     return result;
   })()`);
 }
@@ -1399,6 +1562,7 @@ async function runFinishOperation(options) {
 
 async function runOneShot(options) {
   const connected = await connectCodexTargets(options.port, options.timeoutMs, options.browserId);
+  const mediaServers = new MediaServerController();
   const operationToken = options.mode === "once" || options.mode === "remove"
     ? options.operationToken ?? nextOperationToken()
     : null;
@@ -1412,8 +1576,15 @@ async function runOneShot(options) {
   }
   let loadedPayload = null;
   try {
-    loadedPayload = (options.mode === "once" || options.mode === "verify" || options.reload)
-      ? await loadPayload(options.themeDir) : null;
+    if (options.mode === "once" || options.mode === "verify" || options.reload) {
+      const theme = await loadTheme(options.themeDir);
+      const stagedMedia = await mediaServers.stage(theme.videoPath);
+      await mediaServers.commit(stagedMedia);
+      const videoTransport = theme.videoPath
+        ? { mode: "blob", ...(stagedMedia?.url ? { fallbackUrl: stagedMedia.url } : {}) }
+        : null;
+      loadedPayload = await loadPayload(options.themeDir, theme, videoTransport);
+    }
   } catch (error) {
     if (operationToken) {
       await Promise.all(connected.map(({ session }) => presentOperationUi(
@@ -1421,6 +1592,7 @@ async function runOneShot(options) {
       )));
     }
     for (const { session } of connected) session.close();
+    await mediaServers.close();
     throw error;
   }
   const payload = loadedPayload?.payload ?? null;
@@ -1437,7 +1609,7 @@ async function runOneShot(options) {
               `正在应用「${loadedPayload.theme.name}」…`,
             );
           }
-          await applyToSession(session, payload);
+          await applyToSession(session, payload, loadedPayload);
           await new Promise((resolve) => setTimeout(resolve, 850));
         }
         if (options.reload) {
@@ -1450,7 +1622,7 @@ async function runOneShot(options) {
                 `正在应用「${loadedPayload.theme.name}」…`,
               );
             }
-            await applyToSession(session, payload);
+            await applyToSession(session, payload, loadedPayload);
           }
         }
         if (operationToken) {
@@ -1507,6 +1679,7 @@ async function runOneShot(options) {
     }
   } finally {
     for (const { session } of connected) session.close();
+    await mediaServers.close();
   }
   console.log(JSON.stringify({ mode: options.mode, port: options.port, targets: results }, null, 2));
   const failed = results.length === 0 || results.some((item) =>
@@ -1516,6 +1689,21 @@ async function runOneShot(options) {
 
 async function runWatch(options) {
   const identityAnchor = await connectBrowserIdentityAnchor(options.port, options.browserId);
+  const mediaServers = new MediaServerController();
+  const stagePayload = async (candidateTheme = null, includeMedia = true) => {
+    const theme = candidateTheme ?? await loadTheme(options.themeDir);
+    const stagedMedia = includeMedia ? await mediaServers.stage(theme.videoPath) : null;
+    try {
+      const videoTransport = theme.videoPath
+        ? { mode: "blob", ...(stagedMedia?.url ? { fallbackUrl: stagedMedia.url } : {}) }
+        : null;
+      const payload = await loadPayload(options.themeDir, theme, videoTransport);
+      return { payload, stagedMedia };
+    } catch (error) {
+      await mediaServers.abort(stagedMedia);
+      throw error;
+    }
+  };
   const sessions = new Map();
   const earlyScripts = new Map();
   const fallbackTargets = new Map();
@@ -1547,7 +1735,8 @@ async function runWatch(options) {
     session.on("Page.loadEventFired", () => {
       if (!fallbackTargets.get(id)) return;
       setTimeout(() => {
-        const operation = paused ? removeFromSession(session) : applyToSession(session, loadedPayload.payload);
+        const operation = paused ? removeFromSession(session) :
+          applyToSession(session, loadedPayload.payload, loadedPayload);
         operation.catch((error) => {
           if (Date.now() - lastReinjectErrorLogAt >= 30000) {
             console.error(`[dream-skin] reinject failed for ${target.id}: ${error.message}`);
@@ -1561,9 +1750,11 @@ async function runWatch(options) {
   process.on("SIGTERM", stop);
 
   try {
-    loadedPayload = await loadPayload(options.themeDir);
-    lastStrongThemeAuditAt = Date.now();
     paused = await fileExists(options.pauseFile);
+    const initial = await stagePayload(null, !paused);
+    loadedPayload = initial.payload;
+    await mediaServers.commit(paused ? null : initial.stagedMedia);
+    lastStrongThemeAuditAt = Date.now();
     while (!stopping) {
       if (identityAnchor.closed) {
         console.error("[dream-skin] original CDP browser identity closed; watcher is stopping instead of reconnecting");
@@ -1587,6 +1778,7 @@ async function runWatch(options) {
 
       const nextPaused = await fileExists(options.pauseFile);
       let nextPayload = loadedPayload;
+      let stagedMedia = null;
       if (!nextPaused) {
         try {
           const now = Date.now();
@@ -1601,13 +1793,17 @@ async function runWatch(options) {
           if (shouldAudit) {
             const candidateTheme = await loadTheme(options.themeDir);
             lastStrongThemeAuditAt = now;
-            if (!loadedPayload || candidateTheme.fingerprint !== loadedPayload.fingerprint) {
-              nextPayload = await loadPayload(options.themeDir, candidateTheme);
+            if (!loadedPayload || paused || candidateTheme.fingerprint !== loadedPayload.fingerprint) {
+              const staged = await stagePayload(candidateTheme);
+              nextPayload = staged.payload;
+              stagedMedia = staged.stagedMedia;
             } else {
               loadedPayload.sourceStamp = candidateTheme.sourceStamp;
             }
           }
         } catch (error) {
+          await mediaServers.abort(stagedMedia);
+          stagedMedia = null;
           if (Date.now() - lastThemeErrorLogAt >= 30000) {
             console.error(`[dream-skin] theme update rejected: ${error.message}; keeping the active theme`);
             lastThemeErrorLogAt = Date.now();
@@ -1625,6 +1821,7 @@ async function runWatch(options) {
             const previousEarlyScript = earlyScripts.get(id);
             if (paused) {
               await removeFromSession(session);
+              await syncMediaFetchPolicyForSession(session, null);
               await removeEarlyPayload(session, previousEarlyScript);
               earlyScripts.delete(id);
               fallbackTargets.delete(id);
@@ -1636,6 +1833,7 @@ async function runWatch(options) {
                   session,
                   loadedPayload.payload,
                   loadedPayload.fingerprint,
+                  loadedPayload.revision,
                 );
                 if (!nextEarlyScript) throw new Error("CDP did not return an early-script identifier");
                 fallbackTargets.set(id, false);
@@ -1647,7 +1845,7 @@ async function runWatch(options) {
               if (nextEarlyScript) earlyScripts.set(id, nextEarlyScript);
               else earlyScripts.delete(id);
               await removeEarlyPayload(session, previousEarlyScript);
-              await applyToSession(session, loadedPayload.payload);
+              await applyToSession(session, loadedPayload.payload, loadedPayload);
             }
           } catch (error) {
             console.error(`[dream-skin] live theme update failed for ${id}: ${error.message}`);
@@ -1659,7 +1857,10 @@ async function runWatch(options) {
             sessions.delete(id);
           }
         }
+        await mediaServers.commit(paused ? null : stagedMedia);
         console.log(paused ? "[dream-skin] paused" : `[dream-skin] active theme ${loadedPayload.theme.id}`);
+      } else {
+        await mediaServers.abort(stagedMedia);
       }
 
       const activeIds = new Set(targets.map((target) => target.id));
@@ -1673,6 +1874,7 @@ async function runWatch(options) {
           fallbackTargets.delete(id);
           fallbackListeners.delete(id);
           session.close();
+          mediaPolicyTargets.delete(id);
           sessions.delete(id);
           targetFailures.delete(id);
         }
@@ -1694,9 +1896,14 @@ async function runWatch(options) {
                 session,
                 loadedPayload.payload,
                 loadedPayload.fingerprint,
+                loadedPayload.revision,
               );
               if (!earlyScriptId) throw new Error("CDP did not return an early-script identifier");
-              await session.evaluate(earlyPayloadFor(loadedPayload.payload, loadedPayload.fingerprint));
+              await session.evaluate(earlyPayloadFor(
+                loadedPayload.payload,
+                loadedPayload.fingerprint,
+                loadedPayload.revision,
+              ));
             } catch (error) {
               await removeEarlyPayload(session, earlyScriptId);
               earlyScriptId = null;
@@ -1724,7 +1931,9 @@ async function runWatch(options) {
             ).catch(() => false);
           }
           if (paused) await removeFromSession(session);
-          else if (!earlyApplied) await applyToSession(session, loadedPayload.payload);
+          else if (!earlyApplied || loadedPayload.videoPath) {
+            await applyToSession(session, loadedPayload.payload, loadedPayload);
+          }
           sessions.set(target.id, session);
           if (earlyScriptId) earlyScripts.set(target.id, earlyScriptId);
           targetFailures.delete(target.id);
@@ -1734,6 +1943,7 @@ async function runWatch(options) {
           fallbackTargets.delete(target.id);
           fallbackListeners.delete(target.id);
           session?.close();
+          mediaPolicyTargets.delete(target.id);
           if (identityAnchor.closed || error instanceof CdpIdentityMismatchError) break;
           rejectTarget(target, 2500, error);
         }
@@ -1749,6 +1959,7 @@ async function runWatch(options) {
     earlyScripts.clear();
     fallbackTargets.clear();
     fallbackListeners.clear();
+    await mediaServers.close();
   }
 }
 

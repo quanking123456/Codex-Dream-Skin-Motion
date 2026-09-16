@@ -96,6 +96,9 @@ function makeDomFixture({
   viewportHeight = 800,
   scrollWidth = viewportWidth,
   scrollHeight = viewportHeight,
+  videoMode = null,
+  videoReady = null,
+  videoFailed = null,
 } = {}) {
   const styleNode = {};
   const documentElement = {
@@ -130,6 +133,9 @@ function makeDomFixture({
       version: SKIN_VERSION,
       themeId: "fixture-theme",
       revision: "fixture-revision",
+      videoMode,
+      videoReady,
+      videoFailed,
       styleMode: "style",
       styleNode,
       scope,
@@ -199,6 +205,26 @@ test("normal L1 renderer requires and records the exact target window binding", 
     { method: "Browser.getWindowForTarget", params: { targetId: "page-main" } },
     { method: "Browser.getWindowBounds", params: { windowId: 41 } },
   ]);
+});
+
+test("video themes pass only after the first frame is ready", async () => {
+  const pending = await verify({
+    dom: makeDomFixture({ videoMode: "blob", videoReady: false, videoFailed: false }),
+  });
+  assert.equal(pending.result.pass, false);
+  assert.equal(pending.result.videoPass, false);
+
+  const ready = await verify({
+    dom: makeDomFixture({ videoMode: "blob", videoReady: true, videoFailed: false }),
+  });
+  assert.equal(ready.result.pass, true);
+  assert.equal(ready.result.videoPass, true);
+
+  const failed = await verify({
+    dom: makeDomFixture({ videoMode: "blob", videoReady: true, videoFailed: true }),
+  });
+  assert.equal(failed.result.pass, false);
+  assert.equal(failed.result.videoPass, false);
 });
 
 test("visible settings is the only L0 structure exception", async () => {

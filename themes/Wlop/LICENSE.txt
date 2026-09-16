@@ -1,0 +1,6 @@
+Media Use Notice
+
+The media in this theme is published by quanking123456 with authorization for
+personal use in Codex Dream Skin. It is not covered by the repository's MIT
+software license. Commercial redistribution or relicensing requires separate
+permission from the rights holder.

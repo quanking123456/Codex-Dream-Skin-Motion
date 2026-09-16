@@ -45,6 +45,7 @@ const PLACEHOLDERS = [
   "__DREAM_SKIN_CSS_JSON__",
   "__DREAM_SKIN_ART_JSON__",
   "__DREAM_SKIN_THEME_JSON__",
+  "__DREAM_SKIN_VIDEO_JSON__",
   "__DREAM_SKIN_VERSION_JSON__",
   "__DREAM_SKIN_STYLE_REVISION_JSON__",
   "__DREAM_SKIN_PAYLOAD_REVISION_JSON__",
@@ -108,11 +109,11 @@ function extractThemeArgument(payload) {
 }
 
 function extractPayloadArguments(payload) {
-  const marker = "((cssText, artDataUrl, themeConfig) => {";
+  const marker = "((cssText, artDataUrl, themeConfig, videoConfig) => {";
   const at = payload.indexOf(marker);
   assert.notEqual(at, -1, "payload must keep the canonical renderer IIFE signature");
   const probe = `${payload.slice(0, at + marker.length)}
-return { cssText, artDataUrl, themeConfig };
+return { cssText, artDataUrl, themeConfig, videoConfig };
 ${payload.slice(at + marker.length)}`;
   return vm.runInNewContext(probe, Object.create(null), { timeout: 10_000 });
 }
@@ -218,6 +219,7 @@ test("the payload build refuses to emit a corrupted script", async () => {
   const fillRest = (source) => source
     .replace("__DREAM_SKIN_CSS_JSON__", () => '""')
     .replace("__DREAM_SKIN_ART_JSON__", () => '""')
+    .replace("__DREAM_SKIN_VIDEO_JSON__", () => "null")
     .replace("__DREAM_SKIN_VERSION_JSON__", () => '"0"')
     .replace("__DREAM_SKIN_STYLE_REVISION_JSON__", () => '"0"')
     .replace("__DREAM_SKIN_PAYLOAD_REVISION_JSON__", () => '"0"');
@@ -245,7 +247,7 @@ test("the payload build refuses to emit a corrupted script", async () => {
   );
   assert.throws(
     () => assertIntactPayload(apostrophe, "self-check"),
-    /not parseable JavaScript/,
-    "A $'-corrupted payload must be caught by the parse assertion.",
+    /not parseable JavaScript|placeholder/,
+    "A $'-corrupted payload must be caught by an integrity assertion.",
   );
 });

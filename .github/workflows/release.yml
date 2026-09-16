@@ -465,13 +465,13 @@ jobs:
 
           ### Downloads
 
-          - **macOS:** [CodexDreamSkin-v${VERSION}.dmg](https://github.com/Fei-Away/Codex-Dream-Skin/releases/download/v${VERSION}/CodexDreamSkin-v${VERSION}.dmg)
-          - **Windows:** [CodexDreamSkin-Setup-v${VERSION}.exe](https://github.com/Fei-Away/Codex-Dream-Skin/releases/download/v${VERSION}/CodexDreamSkin-Setup-v${VERSION}.exe)
-          - [SHA256SUMS.txt](https://github.com/Fei-Away/Codex-Dream-Skin/releases/download/v${VERSION}/SHA256SUMS.txt)
+          - **macOS:** [CodexDreamSkin-v${VERSION}.dmg](https://github.com/quanking123456/Codex-Dream-Skin-Motion/releases/download/v${VERSION}/CodexDreamSkin-v${VERSION}.dmg)
+          - **Windows:** [CodexDreamSkin-Setup-v${VERSION}.exe](https://github.com/quanking123456/Codex-Dream-Skin-Motion/releases/download/v${VERSION}/CodexDreamSkin-Setup-v${VERSION}.exe)
+          - [SHA256SUMS.txt](https://github.com/quanking123456/Codex-Dream-Skin-Motion/releases/download/v${VERSION}/SHA256SUMS.txt)
 
           The packages are currently unsigned. Follow the graphical first-run steps in
-          [macOS installation](https://github.com/Fei-Away/Codex-Dream-Skin/blob/v${VERSION}/docs/install-macos.md)
-          or [Windows installation](https://github.com/Fei-Away/Codex-Dream-Skin/blob/v${VERSION}/docs/install-windows.md).
+          [macOS installation](https://github.com/quanking123456/Codex-Dream-Skin-Motion/blob/v${VERSION}/docs/install-macos.md)
+          or [Windows installation](https://github.com/quanking123456/Codex-Dream-Skin-Motion/blob/v${VERSION}/docs/install-windows.md).
           No terminal trust command is required for ordinary users.
 
           This release was built automatically from ${RELEASE_SHA} after the version bump reached main.

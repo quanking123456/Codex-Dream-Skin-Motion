@@ -1,12 +1,12 @@
-# Codex Dream Skin
+# Codex Dream Skin Motion
 
 <p align="center">
   <a href="./README.md">中文</a> · <strong>English</strong>
 </p>
 
 <p align="center">
-  <strong>Give Codex a face that breathes.</strong><br>
-  External themes for the Codex desktop app · Local CDP inject · No official package mutation
+  <strong>Give Codex Desktop a background that actually moves.</strong><br>
+  Static and MP4 themes · Local CDP injection · No official package mutation
 </p>
 
 <p align="center">
@@ -22,6 +22,9 @@
 <p align="center">
   Unofficial. Does not modify <code>.app</code> / <code>app.asar</code> / WindowsApps.
 </p>
+
+> This is a community Motion fork of
+> [Fei-Away/Codex-Dream-Skin](https://github.com/Fei-Away/Codex-Dream-Skin), focused on local Windows MP4 backgrounds, stable playback, and downloadable example themes.
 
 ## 🤝 Exclusive sponsor
 
@@ -45,7 +48,7 @@ Passion8 has a benefit for this project's users: register through <a href="https
 ## Install directly
 
 Ordinary users first install and quit the official Codex / ChatGPT app once,
-then download from [GitHub Releases](https://github.com/Fei-Away/Codex-Dream-Skin/releases):
+then download from [GitHub Releases](https://github.com/quanking123456/Codex-Dream-Skin-Motion/releases):
 
 - macOS: open `CodexDreamSkin-vX.Y.Z.dmg` and drag the app to Applications.
 - Windows: run `CodexDreamSkin-Setup-vX.Y.Z.exe` and follow the wizard.
@@ -133,6 +136,15 @@ one-click button. Anything else goes through the manual import below.
 
 ## Tested featured presets
 
+### Wlop dynamic theme and RC static theme
+
+The repository's [`themes/`](./themes/) directory contains two Windows example themes published with permission:
+
+- [`Wlop`](./themes/Wlop/): an MP4 background with `art.jpg` as the poster and failure fallback.
+- [`R-c`](./themes/R-c/): a static theme using `background.jpg`.
+
+Copy the complete theme directory into `%LOCALAPPDATA%\CodexDreamSkin\themes\`, then select it from **Saved themes** in the tray. Dynamic themes use directory installation; the ZIP/community importer intentionally retains its image-only security boundary. See [`themes/README.md`](./themes/README.md).
+
 ### Gothic Void Crusade / 哥特虚空远征
 
 **Special thanks to [@seansong-ideogram](https://github.com/seansong-ideogram) for designing and contributing this striking, atmospheric original gothic science-fiction work to the community.** It leads the tested featured presets and is the default theme for fresh macOS installs.
@@ -188,7 +200,7 @@ to use and save it for one-click switching.
 
 You do not need to clone the repository, install Node.js, or run `.sh` / `.ps1`
 files. Download the latest package for your platform from
-[GitHub Releases](https://github.com/Fei-Away/Codex-Dream-Skin/releases), then
+[GitHub Releases](https://github.com/quanking123456/Codex-Dream-Skin-Motion/releases), then
 follow the graphical first-run guide:
 
 | Platform | Download | Install guide |

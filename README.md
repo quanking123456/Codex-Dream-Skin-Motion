@@ -1,12 +1,12 @@
-# Codex Dream Skin
+# Codex Dream Skin Motion
 
 <p align="center">
   <strong>中文</strong> · <a href="./README.en.md">English</a>
 </p>
 
 <p align="center">
-  <strong>给 Codex 桌面端换一张会呼吸的脸。</strong><br>
-  外部主题 / 换肤工具 · 本机 CDP 注入 · 不改官方安装包
+  <strong>给 Codex 桌面端换一张真正会动的背景。</strong><br>
+  静态与 MP4 动态主题 · 本机 CDP 注入 · 不改官方安装包
 </p>
 
 <p align="center">
@@ -22,6 +22,9 @@
 <p align="center">
   非 OpenAI 官方产品。不修改 <code>.app</code> / <code>app.asar</code> / WindowsApps。
 </p>
+
+> 这是 [Fei-Away/Codex-Dream-Skin](https://github.com/Fei-Away/Codex-Dream-Skin)
+> 的社区 Motion 分支，重点增加 Windows 本地 MP4 动态背景、播放稳定性处理和可下载示例主题。
 
 ## 🤝 独家赞助
 
@@ -45,7 +48,7 @@ Passion8 为本项目用户准备了专属福利：通过<a href="https://passio
 ## 直接安装
 
 普通用户只需先安装并退出一次官方 Codex / ChatGPT，然后从
-[GitHub Releases](https://github.com/Fei-Away/Codex-Dream-Skin/releases) 下载：
+[GitHub Releases](https://github.com/quanking123456/Codex-Dream-Skin-Motion/releases) 下载：
 
 - macOS：打开 `CodexDreamSkin-vX.Y.Z.dmg`，把 App 拖进 Applications。
 - Windows：双击 `CodexDreamSkin-Setup-vX.Y.Z.exe`，按安装向导完成。
@@ -119,6 +122,17 @@ macOS 菜单栏和 Windows 托盘都有「主题库 Gallery」和「在线 Studi
 
 ## 实测精选预设
 
+### Wlop 动态主题与 RC 静态主题
+
+仓库的 [`themes/`](./themes/) 目录提供两套经授权公开的 Windows 示例主题：
+
+- [`Wlop`](./themes/Wlop/)：使用 `Wlop.mp4` 的动态背景，并以 `art.jpg` 作为海报图和失败回退。
+- [`R-c`](./themes/R-c/)：使用 `background.jpg` 的静态背景。
+
+把完整主题目录复制到 `%LOCALAPPDATA%\CodexDreamSkin\themes\`，然后在托盘的“已保存主题”中选择。
+动态主题采用目录复制方式安装；ZIP/社区导入器仍保持仅接受图片主题的安全边界。详细说明见
+[`themes/README.zh-CN.md`](./themes/README.zh-CN.md)。
+
 ### Gothic Void Crusade / 哥特虚空远征
 
 **特别感谢 [@seansong-ideogram](https://github.com/seansong-ideogram) 为社区设计并贡献这套精美、极具氛围感的原创哥特科幻作品。** 它是当前实测精选的第一套预设，也是 macOS 全新安装时默认启用的主题。
@@ -166,7 +180,7 @@ macOS 菜单栏和 Windows 托盘都有「主题库 Gallery」和「在线 Studi
 ### 普通用户：下载安装包
 
 不需要 clone 仓库，也不需要安装 Node.js 或运行 `.sh` / `.ps1`。从
-[GitHub Releases](https://github.com/Fei-Away/Codex-Dream-Skin/releases) 下载对应平台的最新安装包，
+[GitHub Releases](https://github.com/quanking123456/Codex-Dream-Skin-Motion/releases) 下载对应平台的最新安装包，
 按平台文档完成一次图形界面安装：
 
 | 平台 | 下载 | 安装说明 |

@@ -125,6 +125,22 @@ assert.deepEqual(
 );
 assert.equal(generations.context.window.__CODEX_DREAM_SKIN_EARLY_APPLIED__, "new");
 
+const duplicate = createFixture();
+duplicate.markers.shell = true;
+duplicate.markers.sidebar = true;
+const duplicatePayload = `window.__CODEX_DREAM_SKIN_STATE__ = { revision: "stable-revision" };
+  window.installs.push("stable")`;
+vm.runInNewContext(
+  earlyPayloadFor(duplicatePayload, "stable-generation", "stable-revision"),
+  duplicate.context,
+);
+vm.runInNewContext(
+  earlyPayloadFor(duplicatePayload, "stable-generation", "stable-revision"),
+  duplicate.context,
+);
+assert.deepEqual(duplicate.context.window.installs, ["stable"],
+  "Reconnecting a watcher must not reinstall an already healthy payload generation.");
+
 const earlySource = earlyPayloadFor("", "source-contract");
 assert.doesNotMatch(earlySource, /MutationObserver|childList|subtree/,
   "Early bootstrap must not observe the entire renderer DOM.");

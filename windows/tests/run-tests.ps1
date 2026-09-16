@@ -1150,6 +1150,32 @@ try {
     throw 'Theme-store initialization overwrote the active custom theme or duplicated its bundled presets.'
   }
 
+  $validVideoFixture = Join-Path $temporaryRoot 'background.mp4'
+  [byte[]]$validVideoBytes = @(
+    0, 0, 0, 24,
+    [byte][char]'f', [byte][char]'t', [byte][char]'y', [byte][char]'p',
+    [byte][char]'i', [byte][char]'s', [byte][char]'o', [byte][char]'m',
+    0, 0, 2, 0,
+    [byte][char]'i', [byte][char]'s', [byte][char]'o', [byte][char]'m',
+    [byte][char]'m', [byte][char]'p', [byte][char]'4', [byte][char]'1',
+    [byte][char]'T', [byte][char]'E', [byte][char]'S', [byte][char]'T'
+  )
+  [System.IO.File]::WriteAllBytes($validVideoFixture, $validVideoBytes)
+  $videoTheme = Set-DreamSkinActiveThemeVideo -VideoPath $validVideoFixture -StateRoot $themeStateRoot
+  if (-not $videoTheme.VideoPath -or $videoTheme.Theme.video -cnotmatch '^video-.+\.mp4$' -or
+    (Get-FileHash -LiteralPath $videoTheme.VideoPath -Algorithm SHA256).Hash -cne
+      (Get-FileHash -LiteralPath $validVideoFixture -Algorithm SHA256).Hash) {
+    throw 'The video picker path did not atomically commit a validated MP4.'
+  }
+  $videoPathBeforeImageUpdate = $videoTheme.VideoPath
+  $backgroundWithVideo = Set-DreamSkinActiveThemeImage `
+    -ImagePath (Join-Path $Root 'assets\dream-reference.jpg') -StateRoot $themeStateRoot
+  if (-not $backgroundWithVideo.VideoPath -or
+    $backgroundWithVideo.VideoPath -ine $videoPathBeforeImageUpdate -or
+    -not (Test-Path -LiteralPath $backgroundWithVideo.VideoPath -PathType Leaf)) {
+    throw 'Changing the static fallback image did not preserve the active video.'
+  }
+
   $releaseFixtureRoot = Join-Path $temporaryRoot 'release-theme-fixture'
   $releaseFixtureAssets = Join-Path $releaseFixtureRoot 'assets'
   $releaseFixtureScripts = Join-Path $releaseFixtureRoot 'scripts'
@@ -1173,6 +1199,7 @@ try {
   Copy-Item -LiteralPath (Join-Path $Root 'scripts\config-utf8.ps1') -Destination $releaseFixtureScripts -Force
   Copy-Item -LiteralPath (Join-Path $Root 'scripts\image-metadata.mjs') -Destination $releaseFixtureScripts -Force
   Copy-Item -LiteralPath (Join-Path $Root 'scripts\injector.mjs') -Destination $releaseFixtureScripts -Force
+  Copy-Item -LiteralPath (Join-Path $Root 'scripts\media-server.mjs') -Destination $releaseFixtureScripts -Force
   Copy-Item -LiteralPath (Join-Path $Root 'scripts\install-dream-skin.ps1') -Destination $releaseFixtureScripts -Force
   Copy-Item -LiteralPath (Join-Path $Root 'scripts\localization-windows.ps1') -Destination $releaseFixtureScripts -Force
   Copy-Item -LiteralPath (Join-Path $Root 'scripts\restore-dream-skin.ps1') -Destination $releaseFixtureScripts -Force
@@ -1652,6 +1679,12 @@ try {
   $windowReadinessTest = Invoke-DreamSkinNative -FilePath $node.Path -ArgumentList @(
     (Join-Path $PSScriptRoot 'injector-window-readiness.test.mjs'))
   if ($windowReadinessTest.ExitCode -ne 0) { throw 'Injector native-window readiness regression test failed.' }
+  $videoBackgroundTest = Invoke-DreamSkinNative -FilePath $node.Path -ArgumentList @(
+    (Join-Path $PSScriptRoot 'video-background.test.mjs'))
+  if ($videoBackgroundTest.ExitCode -ne 0) { throw 'Video background regression test failed.' }
+  $mediaServerTest = Invoke-DreamSkinNative -FilePath $node.Path -ArgumentList @(
+    (Join-Path $PSScriptRoot 'media-server.test.mjs'))
+  if ($mediaServerTest.ExitCode -ne 0) { throw 'Video media server regression test failed.' }
   $imageMetadataTest = Invoke-DreamSkinNative -FilePath $node.Path -ArgumentList @(
     (Join-Path $PSScriptRoot 'image-metadata.test.mjs'))
   if ($imageMetadataTest.ExitCode -ne 0) { throw 'Image metadata regression test failed.' }

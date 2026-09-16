@@ -249,6 +249,28 @@ try {
         $dialog.Dispose()
       }
     }
+    $null = Add-DreamSkinTrayItem -Items $menu.Items -Text (Get-DreamSkinTrayText -Key 'ChangeVideo') -Action {
+      $dialog = [System.Windows.Forms.OpenFileDialog]::new()
+      $dialog.Title = Get-DreamSkinTrayText -Key 'VideoTitle'
+      $dialog.Filter = Get-DreamSkinTrayText -Key 'VideoFilter'
+      $dialog.Multiselect = $false
+      try {
+        if ($dialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
+          $null = Invoke-DreamSkinTrayThemeOperation -Action {
+            $null = Set-DreamSkinActiveThemeVideo -VideoPath $dialog.FileName -StateRoot $StateRoot
+            Set-DreamSkinPaused -Paused $false -StateRoot $StateRoot | Out-Null
+          }
+          $notify.ShowBalloonTip(
+            1800,
+            'Codex Dream Skin',
+            (Get-DreamSkinTrayText -Key 'VideoUpdated'),
+            [System.Windows.Forms.ToolTipIcon]::Info
+          )
+        }
+      } finally {
+        $dialog.Dispose()
+      }
+    }
     $null = Add-DreamSkinTrayItem -Items $menu.Items -Text (Get-DreamSkinTrayText -Key 'ImportZip') -Action {
       $dialog = [System.Windows.Forms.OpenFileDialog]::new()
       $dialog.Title = Get-DreamSkinTrayText -Key 'ImportTitle'

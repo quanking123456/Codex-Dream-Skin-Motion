@@ -33,3 +33,4 @@ windows/scripts/validate-safe-css-file.mjs text eol=lf
 *.webp binary
 *.ico binary
 *.icns binary
+*.mp4 binary

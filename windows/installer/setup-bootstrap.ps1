@@ -127,6 +127,7 @@ try {
     'scripts\config-utf8.ps1',
     'scripts\image-metadata.mjs',
     'scripts\injector.mjs',
+    'scripts\media-server.mjs',
     'scripts\install-dream-skin.ps1',
     'scripts\localization-windows.ps1',
     'scripts\restore-dream-skin.ps1',
