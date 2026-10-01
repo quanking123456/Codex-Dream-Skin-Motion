@@ -379,7 +379,8 @@ html[data-dream-skin="active"]:is([data-dream-task-mode="full"], [data-dream-art
   background: transparent !important;
 }
 
-html[data-dream-skin="active"]:is([data-dream-task-mode="full"], [data-dream-art-task-mode="full"])[data-dream-art-wide="true"]:has(__DREAM_SELECTOR_SHELL_MAIN__):not(:has(__DREAM_SELECTOR_SHELL_MAIN__ __DREAM_SELECTOR_HOME_ROUTE_CSS__))
+/* A retained hidden Home shell must not suppress the visible task's veil. */
+html[data-dream-skin="active"]:is([data-dream-task-mode="full"], [data-dream-art-task-mode="full"])[data-dream-art-wide="true"]
   __DREAM_SELECTOR_SHELL_MAIN__:not(:has(__DREAM_SELECTOR_HOME_ROUTE_CSS__)) {
   background: linear-gradient(90deg,
     var(--ds-immersive-edge),
@@ -413,7 +414,7 @@ html[data-dream-skin="active"]:is([data-dream-task-mode="ambient"], [data-dream-
   background: transparent !important;
 }
 
-html[data-dream-skin="active"]:is([data-dream-task-mode="ambient"], [data-dream-art-task-mode="ambient"], [data-dream-task-mode="banner"], [data-dream-art-task-mode="banner"])[data-dream-art-wide="true"]:has(__DREAM_SELECTOR_SHELL_MAIN__):not(:has(__DREAM_SELECTOR_SHELL_MAIN__ __DREAM_SELECTOR_HOME_ROUTE_CSS__))
+html[data-dream-skin="active"]:is([data-dream-task-mode="ambient"], [data-dream-art-task-mode="ambient"], [data-dream-task-mode="banner"], [data-dream-art-task-mode="banner"])[data-dream-art-wide="true"]
   __DREAM_SELECTOR_SHELL_MAIN__:not(:has(__DREAM_SELECTOR_HOME_ROUTE_CSS__)) {
   background: linear-gradient(90deg,
     var(--ds-task-immersive-edge),
@@ -1550,7 +1551,10 @@ html[data-dream-skin="active"][data-dream-media="video"]
   background-image: none !important;
 }
 
-html[data-dream-skin="active"][data-dream-media="video"] body > #root {
+html[data-dream-skin="active"][data-dream-media="video"] body > #root,
+/* Codex 26.928 mounts its shell under an unnumbered body child. Only lift
+   the coherent app shell, not auxiliary windows or the media stage. */
+html[data-dream-skin="active"][data-dream-media="video"] body > div:has(__DREAM_SELECTOR_SHELL_MAIN__) {
   position: relative !important;
   /* Keep every native task/composer surface above the full-window media stage.
      The explicit stacking context also covers Codex's new-task route, whose

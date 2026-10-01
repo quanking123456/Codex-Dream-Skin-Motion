@@ -379,7 +379,8 @@ html[data-dream-skin="active"]:is([data-dream-task-mode="full"], [data-dream-art
   background: transparent !important;
 }
 
-html[data-dream-skin="active"]:is([data-dream-task-mode="full"], [data-dream-art-task-mode="full"])[data-dream-art-wide="true"]:has(main:is(.main-surface, [data-app-shell-main-surface], [class*="_MainContentSurface_"])):not(:has(main:is(.main-surface, [data-app-shell-main-surface], [class*="_MainContentSurface_"]) [role="main"]))
+/* A retained hidden Home shell must not suppress the visible task's veil. */
+html[data-dream-skin="active"]:is([data-dream-task-mode="full"], [data-dream-art-task-mode="full"])[data-dream-art-wide="true"]
   main:is(.main-surface, [data-app-shell-main-surface], [class*="_MainContentSurface_"]):not(:has([role="main"])) {
   background: linear-gradient(90deg,
     var(--ds-immersive-edge),
@@ -413,7 +414,7 @@ html[data-dream-skin="active"]:is([data-dream-task-mode="ambient"], [data-dream-
   background: transparent !important;
 }
 
-html[data-dream-skin="active"]:is([data-dream-task-mode="ambient"], [data-dream-art-task-mode="ambient"], [data-dream-task-mode="banner"], [data-dream-art-task-mode="banner"])[data-dream-art-wide="true"]:has(main:is(.main-surface, [data-app-shell-main-surface], [class*="_MainContentSurface_"])):not(:has(main:is(.main-surface, [data-app-shell-main-surface], [class*="_MainContentSurface_"]) [role="main"]))
+html[data-dream-skin="active"]:is([data-dream-task-mode="ambient"], [data-dream-art-task-mode="ambient"], [data-dream-task-mode="banner"], [data-dream-art-task-mode="banner"])[data-dream-art-wide="true"]
   main:is(.main-surface, [data-app-shell-main-surface], [class*="_MainContentSurface_"]):not(:has([role="main"])) {
   background: linear-gradient(90deg,
     var(--ds-task-immersive-edge),
@@ -1352,7 +1353,7 @@ html[data-dream-skin="active"][data-dream-art-wide="true"] main:is(.main-surface
 }
 
 html[data-dream-skin="active"][data-dream-art-wide="true"] main:is(.main-surface, [data-app-shell-main-surface], [class*="_MainContentSurface_"])
-  :is(.app-shell-main-content-top-fade, [data-app-shell-main-content-top-fade], [class*="_MainContentTopFade_"]) {
+  :is(.app-shell-main-content-top-fade, [class*="_MainContentTopFade_"]) {
   display: none !important;
   background: transparent !important;
 }
@@ -1550,7 +1551,10 @@ html[data-dream-skin="active"][data-dream-media="video"]
   background-image: none !important;
 }
 
-html[data-dream-skin="active"][data-dream-media="video"] body > #root {
+html[data-dream-skin="active"][data-dream-media="video"] body > #root,
+/* Codex 26.928 mounts its shell under an unnumbered body child. Only lift
+   the coherent app shell, not auxiliary windows or the media stage. */
+html[data-dream-skin="active"][data-dream-media="video"] body > div:has(main:is(.main-surface, [data-app-shell-main-surface], [class*="_MainContentSurface_"])) {
   position: relative !important;
   /* Keep every native task/composer surface above the full-window media stage.
      The explicit stacking context also covers Codex's new-task route, whose
